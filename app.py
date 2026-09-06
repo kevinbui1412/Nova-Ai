@@ -1,4 +1,5 @@
 import os
+import time
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -25,7 +26,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-client = genai.Client(api_key="")
+# Khởi tạo client Gemini (tự động lấy key từ biến môi trường GEMINI_API_KEY trên Render)
+client = genai.Client()
 
 # Model User
 class User(UserMixin, db.Model):
@@ -160,14 +162,23 @@ def chat():
     db.session.add(user_msg_db)
     db.session.commit()
 
-    try:
-        response = client.models.generate_content(
-            model='gemini-3.6-flash',
-            contents=contents,
-        )
-        ai_reply = response.text
-    except Exception as e:
-        ai_reply = f'Đã xảy ra lỗi hệ thống: {str(e)}'
+    # Gọi Gemini 3.6 Flash với cơ chế thử lại (Retry) khi quá tải mạng
+    ai_reply = ""
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model='gemini-3.6-flash',
+                contents=contents,
+            )
+            ai_reply = response.text
+            break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(2)
+                continue
+            else:
+                ai_reply = f'Đã xảy ra lỗi hệ thống hoặc máy chủ đang quá tải: {str(e)}'
 
     ai_msg_db = Message(session_id=chat_id, sender='ai', content=ai_reply)
     db.session.add(ai_msg_db)
