@@ -8,15 +8,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Thư viện Marked.js và DOMPurify để render Markdown đẹp mắt -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
-        /* Tùy chỉnh CSS phụ trợ cho nội dung Markdown hiển thị đẹp hơn */
-        .markdown-content p { margin-bottom: 0.5rem; }
+        /* Tùy chỉnh CSS chi tiết cho nội dung Markdown hiển thị thoáng và rõ ràng */
+        .markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
         .markdown-content p:last-child { margin-bottom: 0; }
-        .markdown-content ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
-        .markdown-content ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+        .markdown-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-content ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-content li { margin-bottom: 0.375rem; line-height: 1.5; }
         .markdown-content strong { font-weight: 600; color: #111827; }
+        .markdown-content h3 { font-size: 1.05rem; font-weight: 700; color: #1f2937; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .markdown-content h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin-top: 1.2rem; margin-bottom: 0.6rem; }
     </style>
 </head>
 <body class="h-full bg-white text-gray-900 flex overflow-hidden font-sans">
@@ -207,6 +210,12 @@
 
     <!-- Script tương tác -->
     <script>
+        // Cấu hình Marked.js để hỗ trợ xuống dòng tự động và chuẩn Github Flavored Markdown
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+
         const chatContainer = document.getElementById('chat-container');
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
@@ -388,7 +397,7 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        // Sử dụng Marked.js và DOMPurify để dịch Markdown sang HTML an toàn và đẹp mắt
+        // Render Markdown chuẩn chỉnh, ngắt dòng tự động và làm sạch an toàn
         function formatMarkdown(text) {
             if (!text) return '';
             try {
