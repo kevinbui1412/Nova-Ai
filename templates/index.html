@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova AI - Trợ lý thông minh</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="h-full bg-white text-gray-900 flex overflow-hidden font-sans">
+
+    <!-- Cột icon thu gọn bên góc trái -->
+    <aside class="w-16 bg-white border-r border-gray-100 flex flex-col items-center justify-between py-4 hidden md:flex z-20 flex-shrink-0">
+        <div class="flex flex-col items-center space-y-6">
+            <!-- Logo chữ NV in đậm -->
+            <div class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center cursor-pointer font-black text-gray-900 text-sm tracking-tighter shadow-sm">
+                NV
+            </div>
+
+            <!-- Nút tạo chat mới -->
+            <a href="/" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 transition" title="Đoạn chat mới">
+                <i class="fa-regular fa-pen-to-square text-base"></i>
+            </a>
+
+            <!-- Nút tìm kiếm lịch sử chat -->
+            <button onclick="toggleSearchModal()" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 transition" title="Tìm kiếm đoạn chat">
+                <i class="fa-solid fa-magnifying-glass text-base"></i>
+            </button>
+        </div>
+
+        <!-- Nút bánh răng màu trắng, nền chữ nhật bo tròn -->
+        <div class="flex flex-col items-center space-y-4">
+            <button onclick="toggleSettingsModal()" class="w-10 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition shadow-sm" title="Cài đặt">
+                <i class="fa-solid fa-gear text-sm"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Sidebar Lịch Sử Chat chính -->
+    <aside class="w-60 bg-gray-50 flex flex-col justify-between border-r border-gray-100 hidden md:flex flex-shrink-0">
+        <div class="p-4 space-y-4 flex-1 flex flex-col overflow-hidden">
+            <div class="text-xs font-semibold text-gray-500 px-2 py-1 uppercase tracking-wider">Đoạn chat gần đây</div>
+
+            <div id="chat-list-container" class="flex-1 overflow-y-auto space-y-1 pr-1">
+                {% for chat in chats %}
+                    <a href="/?chat_id={{ chat.id }}" class="chat-item flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium truncate transition {% if active_chat_id == chat.id %} bg-gray-200 text-gray-900 font-semibold {% else %} text-gray-600 hover:bg-gray-100 {% endif %}" data-title="{{ chat.title | lower }}">
+                        <i class="fa-regular fa-message text-gray-400"></i>
+                        <span class="truncate">{{ chat.title }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- User Info & Logout ở đáy Sidebar -->
+        <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-xs">
+                    {{ username[:1] | upper }}
+                </div>
+                <span class="text-sm font-medium text-gray-800 truncate max-w-[100px]">{{ username }}</span>
+            </div>
+            <a href="/logout" class="text-gray-400 hover:text-red-600 transition p-2" title="Đăng xuất">
+                <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Modal Tìm kiếm đoạn chat -->
+    <div id="search-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass text-blue-600"></i> Tìm kiếm lịch sử đoạn chat
+                </h3>
+                <button onclick="toggleSearchModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <input type="text" id="modal-search-input" placeholder="Nhập từ khóa tên đoạn chat..." class="w-full bg-gray-100 border border-transparent focus:border-blue-600 focus:bg-white rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none transition">
+            
+            <div id="search-results" class="max-h-60 overflow-y-auto space-y-1">
+                <div class="text-xs text-gray-400 text-center py-4">Nhập từ khóa để lọc các đoạn chat đã tạo...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cài đặt (Đã đưa về dạng bảng trống, kích thước to rộng, thoáng) -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-8 shadow-2xl border border-gray-100 space-y-6">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2.5">
+                    <i class="fa-solid fa-gear text-blue-600 text-lg"></i> Cài đặt hệ thống
+                </h3>
+                <button onclick="toggleSettingsModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <!-- Nội dung trống, kích thước to rộng thoải mái -->
+            <div class="py-16 text-center text-sm text-gray-400 italic">
+                Chưa có nội dung cài đặt.
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full bg-white relative">
+        
+        <!-- Header -->
+        <header class="h-14 flex items-center justify-between px-6 bg-white z-10 border-b border-gray-50">
+            <span class="text-base font-semibold tracking-wide text-gray-800">Chat with Nova</span>
+            <a href="/logout" class="md:hidden text-gray-500 text-sm"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+        </header>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-3xl w-full mx-auto">
+            {% if active_messages %}
+                {% for msg in active_messages %}
+                    {% if msg.sender == 'user' %}
+                        <div class="flex items-start gap-4 justify-end">
+                            <div class="bg-blue-600 text-white p-4 rounded-2xl rounded-tr-sm text-sm shadow-sm max-w-lg space-y-2">
+                                {% if msg.image_url %}
+                                    <img src="{{ msg.image_url }}" class="rounded-lg max-h-48 object-cover">
+                                {% endif %}
+                                {% if msg.content %}
+                                    <div>{{ msg.content }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm">
+                                {{ username[:1] | upper }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
+                            <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100">
+                                <div>{{ msg.content | safe }}</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">
+                        NV
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed border border-gray-100">
+                        Xin chào! Bạn có thể nhập tin nhắn, tải ảnh lên hoặc đơn giản là **Ctrl + V** dán ảnh trực tiếp vào đây để tôi phân tích nhé.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Image Preview Box -->
+        <div id="preview-box" class="hidden max-w-3xl mx-auto w-full px-4 mb-2 flex items-center gap-2">
+            <div class="relative inline-block">
+                <img id="image-preview" src="" alt="Preview" class="h-16 w-16 object-cover rounded-xl border border-gray-200 shadow-sm">
+                <button type="button" onclick="removeImage()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 shadow">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <span class="text-xs text-gray-500 italic">Đã đính kèm ảnh</span>
+        </div>
+
+        <!-- Input Form Footer -->
+        <div class="p-4 bg-white pb-6">
+            <form id="chat-form" class="max-w-3xl mx-auto relative flex items-center bg-gray-100 rounded-3xl px-4 py-2 border border-transparent focus-within:border-gray-300 focus-within:bg-white transition shadow-sm">
+                
+                <input type="hidden" id="current-chat-id" value="{{ active_chat_id or '' }}">
+                <input type="file" id="image-input" name="image" accept="image/*" class="hidden" onchange="previewFile()">
+                
+                <label for="image-input" class="w-9 h-9 rounded-full hover:bg-gray-200 text-gray-600 cursor-pointer transition flex items-center justify-center mr-2 flex-shrink-0" title="Tải ảnh lên">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                </label>
+
+                <input type="text" id="message-input" name="message" placeholder="Nhập lời nhắc hoặc Ctrl + V dán ảnh..." class="w-full bg-transparent py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none">
+
+                <div class="flex items-center gap-2 ml-2 flex-shrink-0">
+                    <span class="hidden sm:inline-block text-xs font-medium text-gray-500 bg-gray-200 px-2.5 py-1 rounded-full">
+                        Nova AI
+                    </span>
+                    
+                    <button type="button" class="w-8 h-8 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center transition">
+                        <i class="fa-solid fa-microphone text-xs"></i>
+                    </button>
+
+                    <button type="submit" id="send-btn" class="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-arrow-up text-xs"></i>
+                    </button>
+                </div>
+            </form>
+            <div class="text-center mt-2">
+                <span class="text-[11px] text-gray-400">Nova AI hỗ trợ giải đáp thông minh và phân tích hình ảnh trực quan.</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Script tương tác -->
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const imageInput = document.getElementById('image-input');
+        const previewBox = document.getElementById('preview-box');
+        const imagePreview = document.getElementById('image-preview');
+        const currentChatIdInput = document.getElementById('current-chat-id');
+        
+        const searchModal = document.getElementById('search-modal');
+        const modalSearchInput = document.getElementById('modal-search-input');
+        const searchResults = document.getElementById('search-results');
+        const settingsModal = document.getElementById('settings-modal');
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        function toggleSearchModal() {
+            searchModal.classList.toggle('hidden');
+            if (!searchModal.classList.contains('hidden')) {
+                modalSearchInput.focus();
+            }
+        }
+
+        function toggleSettingsModal() {
+            settingsModal.classList.toggle('hidden');
+        }
+
+        modalSearchInput.addEventListener('input', function() {
+            const keyword = this.value.toLowerCase().trim();
+            const chatItems = document.querySelectorAll('.chat-item');
+            
+            searchResults.innerHTML = '';
+            let count = 0;
+
+            chatItems.forEach(item => {
+                const title = item.getAttribute('data-title');
+                const href = item.getAttribute('href');
+                const text = item.querySelector('span').innerText;
+
+                if (title.includes(keyword)) {
+                    count++;
+                    searchResults.innerHTML += `
+                        <a href="${href}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-gray-700 hover:bg-gray-100 transition">
+                            <i class="fa-regular fa-message text-blue-600"></i>
+                            <span class="truncate">${text}</span>
+                        </a>
+                    `;
+                }
+            });
+
+            if (count === 0) {
+                searchResults.innerHTML = `<div class="text-xs text-gray-400 text-center py-4">Không tìm thấy đoạn chat nào phù hợp.</div>`;
+            }
+        });
+
+        messageInput.addEventListener('paste', function(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(blob);
+                    imageInput.files = dataTransfer.files;
+
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        imagePreview.src = event.target.result;
+                        previewBox.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(blob);
+                    e.preventDefault();
+                    break;
+                }
+            }
+        });
+
+        function previewFile() {
+            const file = imageInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewBox.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage() {
+            imageInput.value = '';
+            previewBox.classList.add('hidden');
+            imagePreview.src = '';
+        }
+
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const messageText = messageInput.value.trim();
+            const imageFile = imageInput.files[0];
+
+            if (!messageText && !imageFile) return;
+
+            let userHtml = `<div class="flex items-start gap-4 justify-end">
+                <div class="bg-blue-600 text-white p-4 rounded-2xl rounded-tr-sm text-sm shadow-sm max-w-lg space-y-2">`;
+            
+            if (imageFile) {
+                userHtml += `<img src="${URL.createObjectURL(imageFile)}" class="rounded-lg max-h-48 object-cover">`;
+            }
+            if (messageText) {
+                userHtml += `<div>${escapeHtml(messageText)}</div>`;
+            }
+            userHtml += `</div>
+                <div class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm">
+                    {{ username[:1] | upper }}
+                </div>
+            </div>`;
+
+            chatContainer.insertAdjacentHTML('beforeend', userHtml);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            const formData = new FormData();
+            formData.append('message', messageText);
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+            if (currentChatIdInput.value) {
+                formData.append('chat_id', currentChatIdInput.value);
+            }
+
+            messageInput.value = '';
+            removeImage();
+
+            const loadingId = 'loading-' + Date.now();
+            const loadingHtml = `<div id="${loadingId}" class="flex items-start gap-4">
+                <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
+                <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-500 shadow-sm flex items-center gap-1.5 border border-gray-100">
+                    <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+                    <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                </div>
+            </div>`;
+            chatContainer.insertAdjacentHTML('beforeend', loadingHtml);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                document.getElementById(loadingId).remove();
+
+                let aiHtml = `<div class="flex items-start gap-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
+                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100">`;
+                
+                if (data.image_url) {
+                    aiHtml += `<img src="${data.image_url}" class="rounded-lg max-h-48 object-cover">`;
+                }
+                aiHtml += `<div>${formatMarkdown(data.response)}</div>
+                    </div>
+                </div>`;
+
+                chatContainer.insertAdjacentHTML('beforeend', aiHtml);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                if (!currentChatIdInput.value && data.chat_id) {
+                    setTimeout(() => {
+                        window.location.href = `/?chat_id=${data.chat_id}`;
+                    }, 500);
+                }
+
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                alert('Có lỗi xảy ra khi kết nối tới máy chủ.');
+            }
+        });
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function formatMarkdown(text) {
+            return escapeHtml(text).replace(/\n/g, '<br>');
+        }
+    </script>
+</body>
+</html>
