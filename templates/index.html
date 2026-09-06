@@ -7,19 +7,27 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Thư viện Marked.js và DOMPurify để render Markdown đẹp mắt -->
+    <!-- Thư viện Marked.js và DOMPurify -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
-        /* Tùy chỉnh CSS chi tiết cho nội dung Markdown hiển thị thoáng và rõ ràng */
+        /* CSS tùy chỉnh chuẩn cho định dạng Markdown */
         .markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
         .markdown-content p:last-child { margin-bottom: 0; }
-        .markdown-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
-        .markdown-content ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
-        .markdown-content li { margin-bottom: 0.375rem; line-height: 1.5; }
-        .markdown-content strong { font-weight: 600; color: #111827; }
-        .markdown-content h3 { font-size: 1.05rem; font-weight: 700; color: #1f2937; margin-top: 1rem; margin-bottom: 0.5rem; }
-        .markdown-content h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin-top: 1.2rem; margin-bottom: 0.6rem; }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+            font-weight: 700; color: #111827; margin-top: 1.25rem; margin-bottom: 0.5rem; line-height: 1.3;
+        }
+        .markdown-content h1 { font-size: 1.25rem; }
+        .markdown-content h2 { font-size: 1.15rem; }
+        .markdown-content h3 { font-size: 1.05rem; }
+        .markdown-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-content li { margin-bottom: 0.25rem; line-height: 1.5; }
+        .markdown-content hr { border: 0; border-top: 1px solid #e5e7eb; margin: 1rem 0; }
+        .markdown-content blockquote { border-left: 3px solid #3b82f6; padding-left: 0.75rem; color: #4b5563; font-style: italic; margin: 0.75rem 0; }
+        .markdown-content code { background-color: #f3f4f6; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.875em; font-family: monospace; }
+        .markdown-content pre { background-color: #1f2937; color: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; }
+        .markdown-content pre code { background: transparent; padding: 0; color: inherit; }
     </style>
 </head>
 <body class="h-full bg-white text-gray-900 flex overflow-hidden font-sans">
@@ -27,23 +35,16 @@
     <!-- Cột icon thu gọn bên góc trái -->
     <aside class="w-16 bg-white border-r border-gray-100 flex flex-col items-center justify-between py-4 hidden md:flex z-20 flex-shrink-0">
         <div class="flex flex-col items-center space-y-6">
-            <!-- Logo chữ NV in đậm -->
             <div class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center cursor-pointer font-black text-gray-900 text-sm tracking-tighter shadow-sm">
                 NV
             </div>
-
-            <!-- Nút tạo chat mới -->
             <a href="/" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 transition" title="Đoạn chat mới">
                 <i class="fa-regular fa-pen-to-square text-base"></i>
             </a>
-
-            <!-- Nút tìm kiếm lịch sử chat -->
             <button onclick="toggleSearchModal()" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 transition" title="Tìm kiếm đoạn chat">
                 <i class="fa-solid fa-magnifying-glass text-base"></i>
             </button>
         </div>
-
-        <!-- Nút bánh răng màu trắng, nền chữ nhật bo tròn -->
         <div class="flex flex-col items-center space-y-4">
             <button onclick="toggleSettingsModal()" class="w-10 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition shadow-sm" title="Cài đặt">
                 <i class="fa-solid fa-gear text-sm"></i>
@@ -51,11 +52,10 @@
         </div>
     </aside>
 
-    <!-- Sidebar Lịch Sử Chat chính -->
+    <!-- Sidebar Lịch Sử Chat -->
     <aside class="w-60 bg-gray-50 flex flex-col justify-between border-r border-gray-100 hidden md:flex flex-shrink-0">
         <div class="p-4 space-y-4 flex-1 flex flex-col overflow-hidden">
             <div class="text-xs font-semibold text-gray-500 px-2 py-1 uppercase tracking-wider">Đoạn chat gần đây</div>
-
             <div id="chat-list-container" class="flex-1 overflow-y-auto space-y-1 pr-1">
                 {% for chat in chats %}
                     <a href="/?chat_id={{ chat.id }}" class="chat-item flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium truncate transition {% if active_chat_id == chat.id %} bg-gray-200 text-gray-900 font-semibold {% else %} text-gray-600 hover:bg-gray-100 {% endif %}" data-title="{{ chat.title | lower }}">
@@ -66,7 +66,6 @@
             </div>
         </div>
         
-        <!-- User Info & Logout ở đáy Sidebar -->
         <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50 flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-xs">
@@ -80,7 +79,7 @@
         </div>
     </aside>
 
-    <!-- Modal Tìm kiếm đoạn chat -->
+    <!-- Modal Tìm kiếm -->
     <div id="search-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-4">
             <div class="flex items-center justify-between border-b border-gray-100 pb-3">
@@ -92,7 +91,6 @@
                 </button>
             </div>
             <input type="text" id="modal-search-input" placeholder="Nhập từ khóa tên đoạn chat..." class="w-full bg-gray-100 border border-transparent focus:border-blue-600 focus:bg-white rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none transition">
-            
             <div id="search-results" class="max-h-60 overflow-y-auto space-y-1">
                 <div class="text-xs text-gray-400 text-center py-4">Nhập từ khóa để lọc các đoạn chat đã tạo...</div>
             </div>
@@ -118,8 +116,6 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col h-full bg-white relative">
-        
-        <!-- Header -->
         <header class="h-14 flex items-center justify-between px-6 bg-white z-10 border-b border-gray-50">
             <span class="text-base font-semibold tracking-wide text-gray-800">Chat with Nova</span>
             <a href="/logout" class="md:hidden text-gray-500 text-sm"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
@@ -146,19 +142,19 @@
                     {% else %}
                         <div class="flex items-start gap-4">
                             <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
-                            <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100 markdown-content">
-                                <div>{{ msg.content | safe }}</div>
+                            <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed border border-gray-100 markdown-content ai-bubble">
+                                <script type="text/template" class="raw-markdown">{{ msg.content }}</script>
+                                <div class="rendered-markdown"></div>
                             </div>
                         </div>
                     {% endif %}
                 {% endfor %}
             {% else %}
                 <div class="flex items-start gap-4">
-                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">
-                        NV
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed border border-gray-100 markdown-content">
-                        Xin chào! Bạn có thể nhập tin nhắn, tải ảnh lên hoặc đơn giản là **Ctrl + V** dán ảnh trực tiếp vào đây để tôi phân tích nhé.
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
+                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed border border-gray-100 markdown-content ai-bubble">
+                        <script type="text/template" class="raw-markdown">Xin chào! Bạn có thể nhập tin nhắn, tải ảnh lên hoặc đơn giản là **Ctrl + V** dán ảnh trực tiếp vào đây để tôi phân tích nhé.</script>
+                        <div class="rendered-markdown"></div>
                     </div>
                 </div>
             {% endif %}
@@ -178,7 +174,6 @@
         <!-- Input Form Footer -->
         <div class="p-4 bg-white pb-6">
             <form id="chat-form" class="max-w-3xl mx-auto relative flex items-center bg-gray-100 rounded-3xl px-4 py-2 border border-transparent focus-within:border-gray-300 focus-within:bg-white transition shadow-sm">
-                
                 <input type="hidden" id="current-chat-id" value="{{ active_chat_id or '' }}">
                 <input type="file" id="image-input" name="image" accept="image/*" class="hidden" onchange="previewFile()">
                 
@@ -192,11 +187,9 @@
                     <span class="hidden sm:inline-block text-xs font-medium text-gray-500 bg-gray-200 px-2.5 py-1 rounded-full">
                         Nova AI
                     </span>
-                    
                     <button type="button" class="w-8 h-8 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center transition">
                         <i class="fa-solid fa-microphone text-xs"></i>
                     </button>
-
                     <button type="submit" id="send-btn" class="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition flex items-center justify-center shadow-sm">
                         <i class="fa-solid fa-arrow-up text-xs"></i>
                     </button>
@@ -208,10 +201,10 @@
         </div>
     </main>
 
-    <!-- Script tương tác -->
+    <!-- Script xử lý Markdown & Tương tác -->
     <script>
-        // Cấu hình Marked.js để hỗ trợ xuống dòng tự động và chuẩn Github Flavored Markdown
-        marked.setOptions({
+        // Cấu hình Marked.js
+        marked.use({
             breaks: true,
             gfm: true
         });
@@ -229,7 +222,36 @@
         const searchResults = document.getElementById('search-results');
         const settingsModal = document.getElementById('settings-modal');
 
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        // Hàm render Markdown an toàn
+        function formatMarkdown(text) {
+            if (!text) return '';
+            try {
+                const parsedHtml = marked.parse(text);
+                return DOMPurify.sanitize(parsedHtml);
+            } catch (e) {
+                return escapeHtml(text).replace(/\n/g, '<br>');
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Tự động render tất cả các bong bóng tin nhắn AI khi trang tải xong
+        function renderAllAiMessages() {
+            document.querySelectorAll('.ai-bubble').forEach(bubble => {
+                const rawScript = bubble.querySelector('.raw-markdown');
+                const targetDiv = bubble.querySelector('.rendered-markdown');
+                if (rawScript && targetDiv) {
+                    targetDiv.innerHTML = formatMarkdown(rawScript.innerHTML);
+                }
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Chạy render ngay khi trang sẵn sàng
+        document.addEventListener('DOMContentLoaded', renderAllAiMessages);
+        renderAllAiMessages();
 
         function toggleSearchModal() {
             searchModal.classList.toggle('hidden');
@@ -369,10 +391,10 @@
 
                 let aiHtml = `<div class="flex items-start gap-4">
                     <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
-                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100 markdown-content">`;
+                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed border border-gray-100 markdown-content">`;
                 
                 if (data.image_url) {
-                    aiHtml += `<img src="${data.image_url}" class="rounded-lg max-h-48 object-cover">`;
+                    aiHtml += `<img src="${data.image_url}" class="rounded-lg max-h-48 object-cover mb-2">`;
                 }
                 aiHtml += `<div>${formatMarkdown(data.response)}</div>
                     </div>
@@ -392,21 +414,6 @@
                 alert('Có lỗi xảy ra khi kết nối tới máy chủ.');
             }
         });
-
-        function escapeHtml(text) {
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
-        // Render Markdown chuẩn chỉnh, ngắt dòng tự động và làm sạch an toàn
-        function formatMarkdown(text) {
-            if (!text) return '';
-            try {
-                const parsedHtml = marked.parse(text);
-                return DOMPurify.sanitize(parsedHtml);
-            } catch (e) {
-                return escapeHtml(text).replace(/\n/g, '<br>');
-            }
-        }
     </script>
 </body>
 </html>
