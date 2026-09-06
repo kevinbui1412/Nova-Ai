@@ -10,9 +10,14 @@ from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '12042014Aichatbot!'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
+# Cấu hình đường dẫn tuyệt đối cho SQLite để chạy ổn định trên Render
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "users.db")}'
+app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'static', 'uploads')
+
+# Tự động tạo các thư mục cần thiết nếu chưa có
+os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
@@ -113,7 +118,6 @@ def chat():
     image_file = request.files.get('image')
     chat_id = request.form.get('chat_id', type=int)
     
-    # Nếu chưa có đoạn chat nào đang mở, tự động tạo phiên chat mới
     if not chat_id:
         title = user_message[:30] + ('...' if len(user_message) > 30 else '') if user_message else "Đoạn chat hình ảnh"
         new_session = ChatSession(title=title, user_id=current_user.id)
@@ -122,7 +126,6 @@ def chat():
         chat_id = new_session.id
     else:
         chat_session = ChatSession.query.filter_by(id=chat_id, user_id=current_user.id).first()
-        # Cập nhật lại tiêu đề chat theo câu hỏi đầu tiên nếu chat đang trống
         if chat_session and not chat_session.messages and user_message:
             chat_session.title = user_message[:30] + ('...' if len(user_message) > 30 else '')
             db.session.commit()
@@ -153,7 +156,6 @@ def chat():
     if not contents:
         return jsonify({'response': 'Vui lòng nhập nội dung hoặc tải lên một hình ảnh.'})
 
-    # Lưu tin nhắn của User vào DB
     user_msg_db = Message(session_id=chat_id, sender='user', content=user_message, image_url=relative_image_url)
     db.session.add(user_msg_db)
     db.session.commit()
@@ -167,7 +169,6 @@ def chat():
     except Exception as e:
         ai_reply = f'Đã xảy ra lỗi hệ thống: {str(e)}'
 
-    # Lưu câu trả lời của AI vào DB
     ai_msg_db = Message(session_id=chat_id, sender='ai', content=ai_reply)
     db.session.add(ai_msg_db)
     db.session.commit()
