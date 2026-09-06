@@ -1,4 +1,6 @@
 Flask
 Flask-SQLAlchemy
+Flask-Login
 Werkzeug
+google-genai
 gunicorn
