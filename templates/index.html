@@ -7,6 +7,17 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Thư viện Marked.js và DOMPurify để render Markdown đẹp mắt -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <style>
+        /* Tùy chỉnh CSS phụ trợ cho nội dung Markdown hiển thị đẹp hơn */
+        .markdown-content p { margin-bottom: 0.5rem; }
+        .markdown-content p:last-child { margin-bottom: 0; }
+        .markdown-content ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+        .markdown-content ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+        .markdown-content strong { font-weight: 600; color: #111827; }
+    </style>
 </head>
 <body class="h-full bg-white text-gray-900 flex overflow-hidden font-sans">
 
@@ -85,7 +96,7 @@
         </div>
     </div>
 
-    <!-- Modal Cài đặt (Đã đưa về dạng bảng trống, kích thước to rộng, thoáng) -->
+    <!-- Modal Cài đặt -->
     <div id="settings-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-8 shadow-2xl border border-gray-100 space-y-6">
             <div class="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -96,7 +107,6 @@
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
-            <!-- Nội dung trống, kích thước to rộng thoải mái -->
             <div class="py-16 text-center text-sm text-gray-400 italic">
                 Chưa có nội dung cài đặt.
             </div>
@@ -133,7 +143,7 @@
                     {% else %}
                         <div class="flex items-start gap-4">
                             <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
-                            <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100">
+                            <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100 markdown-content">
                                 <div>{{ msg.content | safe }}</div>
                             </div>
                         </div>
@@ -144,7 +154,7 @@
                     <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">
                         NV
                     </div>
-                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed border border-gray-100">
+                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed border border-gray-100 markdown-content">
                         Xin chào! Bạn có thể nhập tin nhắn, tải ảnh lên hoặc đơn giản là **Ctrl + V** dán ảnh trực tiếp vào đây để tôi phân tích nhé.
                     </div>
                 </div>
@@ -350,7 +360,7 @@
 
                 let aiHtml = `<div class="flex items-start gap-4">
                     <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-sm tracking-tighter">NV</div>
-                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100">`;
+                    <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-sm text-sm text-gray-800 shadow-sm leading-relaxed space-y-2 border border-gray-100 markdown-content">`;
                 
                 if (data.image_url) {
                     aiHtml += `<img src="${data.image_url}" class="rounded-lg max-h-48 object-cover">`;
@@ -378,8 +388,15 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
+        // Sử dụng Marked.js và DOMPurify để dịch Markdown sang HTML an toàn và đẹp mắt
         function formatMarkdown(text) {
-            return escapeHtml(text).replace(/\n/g, '<br>');
+            if (!text) return '';
+            try {
+                const parsedHtml = marked.parse(text);
+                return DOMPurify.sanitize(parsedHtml);
+            } catch (e) {
+                return escapeHtml(text).replace(/\n/g, '<br>');
+            }
         }
     </script>
 </body>
